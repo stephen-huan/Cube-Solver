@@ -11,15 +11,25 @@ WCA orientation is white top green front.
 
 ### NAMED CONSTANTS ###
 
+def inv(d): return {v: k for k, v in d.items()}
+
 #U, D, F, B, R, L = 0, 5, 1, 4, 2, 3
 ORDER = [0, 5, 1, 4, 2, 3]
 W, Y, G, B, R, O = ORDER
 COLORS = "WYGBRO"
 INT_STR = dict(zip(ORDER + [None], COLORS + " "))
-STR_INT = {v: k for k, v in INT_STR.items()}
+STR_INT = inv(INT_STR)
 CWC, CWE = [0, 2, 8, 6], [1, 5, 7, 3]
 ORIENT = {i: j//2 for j, i in enumerate(ORDER)}
 FLIPPED = {R: False, B: False, Y: True}
+
+MOVES = "UDFBRL"
+COLORS_MOVE = dict(zip(COLORS, MOVES))
+MOVE_COLORS = inv(COLORS_MOVE)
+STR_NUM = {'': 1, '2': 2, "'": 3}
+NUM_STR = inv(STR_NUM)
+FACE = [G, R, B, O, W, Y] # Srikar specification
+x, y, z = ORIENT[R], ORIENT[W], ORIENT[G]
 
 ESC = "\033"
 TILE = "█"
@@ -114,6 +124,32 @@ def tokenize(moves): return moves.split() if type(moves) is str else moves
 def opposite(move): return move[0] + {"'": "", "2":"2"}.get(move[-1], "'")
 
 def inverse(moves): return " ".join(reversed(list(map(opposite, tokenize(moves)))))
+
+def rotate(orient, dir):
+    indexes = [(i,) for i, c in enumerate(orient) if ORIENT[c] != dir]
+    i, j = (-1, -2) if dir != z else (0, 1)
+    i, j = indexes[i][0], indexes[j][0]
+    cycle(orient, indexes)
+    cycle(orient, indexes)
+    orient[i], orient[j] = orient[j], orient[i]
+    return orient
+
+def rotation(moves):
+    """ Orientation of the cube is given by two numbers: top color and front color.
+    6 top colors * 4 front colors / top color = 24 possible orientations
+    Human FMC trick is used: no matter the orientation, turning a color is equivalent to
+    the move that is associated with that color. """
+    orient = ORDER.copy()
+    rot = dict(zip("xyz", (x, y, z)))
+    new = []
+    for move in tokenize(moves):
+        move, number = move[0], move[1:] if len(move) > 1 else ""
+        if move in rot:
+            for i in range(STR_NUM[number]):
+                orient = rotate(orient, rot[move])
+        else:
+            new.append(COLORS_MOVE[INT_STR[orient[ORDER.index(STR_INT[MOVE_COLORS[move]])]]] + number)
+    return " ".join(new)
 
 ### MAIN CLASSES ###
 
@@ -247,7 +283,8 @@ class Cube:
                 }[face]
         return layer
 
-    def to_face(self): return [[cubie.colors[min(face, 5 - face)] for cubie in (access(self.cube, i) for i in cube.get_layer(face))] for face in range(6)]
+    def to_face(self, order=range(6)):
+        return [[cubie.colors[min(face, 5 - face)] for cubie in (access(self.cube, i) for i in self.get_layer(face))] for face in order]
 
     def move(self, dir):
         layer = self.get_layer(dir)
@@ -255,11 +292,12 @@ class Cube:
         cycle(self.cube, get(layer, CWC))
         cycle(self.cube, get(layer, CWE))
 
-        for cubie in layer: access(self.cube, cubie).rotate(ORIENT[dir])
+        for cubie in layer:
+            access(self.cube, cubie).rotate(ORIENT[dir])
 
     def turn(self, moves):
         turns = dict(zip("UDFBRL", ORDER))
-        for move in tokenize(moves):
+        for move in tokenize(rotation(moves)):
             move, number = move[0], move[1:] if len(move) > 1 else 1
             number = 3 if number == "'" else int(number)
             for i in range(4 - number if turns[move] in FLIPPED else number):
@@ -268,6 +306,7 @@ class Cube:
 
 ### MORE STUFF ###
 
+#TODO: moves by dict, not list append (O(n))
 def solve(start, target=(Cube(), solved), metric=HTM):
     goal, evaluate = target
 
@@ -308,7 +347,7 @@ def IDsolve(start, target, metric, depth):
         for i in range(poss):
             n, path, moves = stk[i].pop()
             repr = fast_str(n.cube)
-            
+
             if repr in seen[i ^ 1] if goal is not None else evaluate(n):
                 if goal is None: return states, moves
                 prefix, suffix = (moves, seen[i ^ 1][repr]) if i == 0 else (seen[i ^ 1][repr], moves)
@@ -326,13 +365,13 @@ def IDsolve(start, target, metric, depth):
                         children, last = True, move
                         stk[i].append((child, path | {repr}, moves + [move]))
 
-def solve(start, target=(Cube(), solved), metric=HTM):
-    rtn, depth = None, 0
-    while rtn is None:
-        rtn = IDsolve(start, target, metric, depth)
-        print(depth)
-        depth += 1
-    return rtn
+# def solve(start, target=(Cube(), solved), metric=HTM):
+#     rtn, depth = None, 0
+#     while rtn is None:
+#         rtn = IDsolve(start, target, metric, depth)
+#         print(depth)
+#         depth += 1
+#     return rtn
 
 def import_cube(fname):
     with open(fname) as f:
@@ -349,8 +388,8 @@ if __name__ == "__main__":
     # cube = import_cube("test.txt")
     cube = Cube()
     # print(cube)
-    # cube.turn("R U' R U R U R U' R' U' R2")
-    cube.turn("R U'")
+    cube.turn("R U' R U R U R U' R' U' R2")
+    # cube.turn("R U'")
     print(cube)
-    states, alg = solve(cube, (None, solved), HTM)
+    states, alg = solve(cube, (Cube(), solved), HTM)
     print(states, alg, len(tokenize(alg)))
