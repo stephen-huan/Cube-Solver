@@ -31,7 +31,7 @@ NUM_STR = inv(STR_NUM)
 FACE = [G, R, B, O, W, Y] # Srikar specification
 x, y, z = ORIENT[R], ORIENT[W], ORIENT[G]
 
-ESC = "\033"
+ESC = "^<ESC^>"
 TILE = "█"
 
 ### HELPER FUNCTIONS ###
@@ -252,7 +252,7 @@ class Cube:
         #layer by layer starting from the top; top - down left - right
         self.cube = get_solved_cube() if other is None else [[Cubie(*cubie.colors) for cubie in layer] for layer in other.cube]
 
-    def __str__(self): return color(self.to_str())
+    def __str__(self): return self.to_str()
 
     def to_str(self):
         cube = [flip(list_mat(get(INT_STR, face)), FLIPPED.get(i, None)) for i, face in enumerate(self.to_face())]
@@ -319,7 +319,6 @@ def solve(start, target=(Cube(), solved), metric=HTM):
         for i in range(poss):
             n, moves = q[i].popleft()
             repr = fast_str(n.cube)
-            seen[i][repr] = moves
 
             if repr in seen[i ^ 1] if goal is not None else evaluate(n):
                 if goal is None: return states, moves
@@ -387,8 +386,9 @@ def import_cube(fname):
 if __name__ == "__main__":
     # cube = import_cube("test.txt")
     cube = Cube()
-    # print(cube)
-    cube.turn("R U' R U R U R U' R' U' R2")
+    print(cube)
+#    cube.turn("R U' R U R U R U' R' U' R2")
+    cube.turn("R U' R U R U'")
     # cube.turn("R U'")
     print(cube)
     states, alg = solve(cube, (Cube(), solved), HTM)
