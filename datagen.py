@@ -1,5 +1,6 @@
 from cube import *
 from collections import deque
+import numpy as np
 
 def small_datagen(bfs_len, metric=HTM):
     data = []
@@ -33,6 +34,7 @@ def small_datagen(bfs_len, metric=HTM):
 def save_data(filename, data, datatype=0):
     DELIM = ';'
     file = open(filename, 'w+')
+    file_data = []
     for state, moves in data:
         X = state
         if datatype == 0: #Save best next move.
@@ -41,8 +43,10 @@ def save_data(filename, data, datatype=0):
             y = opposite(moves[len(moves) - 1])
         else: #Save number of moves in optimal solution
             y = str(len(moves))
-        file.write(X + DELIM + y + "\n")
+        file_data.append([X,y])
+    file_data = np.array(file_data)
+    np.savetxt(filename, file_data)
 
 if __name__ == "__main__":
     data = small_datagen(2)
-    save_data('training_data.txt', data)
+    save_data('training_data.csv', data)
