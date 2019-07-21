@@ -79,6 +79,13 @@ def unvectorize(vec):
         corner_str = corner_map_inverse[corner_pos]
         for j in range(corner_ori):
             corner_str = corner_str[1:] + corner_str[0]
+        original_in = i in [0,3,5,6]
+        new_in = corner_pos in [0,3,5,6]
+        if original_in ^ new_in:
+            print('hi')
+            corner_arr = list(corner_str)
+            corner_arr[2], corner_arr[1] = corner_arr[1], corner_arr[2]
+            corner_str = ''.join(corner_arr)
         cubie = Cubie(*[ORDER[COLORS.index(i)] for i in corner_str])
         cube[corner_indices[i][0]][corner_indices[i][1]] = cubie
         print(cubie, corner_indices[i])
