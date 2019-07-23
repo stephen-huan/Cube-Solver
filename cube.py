@@ -241,6 +241,57 @@ def solve(start, target=(Cube(), solved), metric=HTM):
                         seen[i][repr] = movesp
                         q[i].append((child, movesp))
 
+# TODO: make bidirectional
+def IDdfs(start, target, metric, depth, filename):
+    goal, evaluate = target
+
+    seen = [{}, {}]
+    stk = [(Cube(start), set(), [])], [(goal, set(), [])]
+    states = 0
+    poss = 1 if goal is None else 2
+
+    f = open(filename, "a")
+
+    def goal_test(node, repr, moves):
+        if repr in seen[i ^ 1] if goal is not None else evaluate(node, moves):
+            if goal is None: return states, moves
+            prefix, suffix = (moves, seen[i ^ 1][repr]) if i == 0 else (seen[i ^ 1][repr], moves)
+            return states, " ".join(prefix) + " " + inverse(suffix), seen
+
+    while len(stk[0]) > 0: #or len(stk[1]) > 0:
+        for i in range(poss):
+            n, path, moves = stk[i].pop()
+
+            val = goal_test(n, fast_str(n.cube), moves)
+            if val is not None: return val
+
+            children = False
+            for move in metric.moves:
+                if len(moves) == 0 or move[0] != moves[-1][0]:
+                    states += 1
+                    child = Cube(n)
+                    child.turn(move)
+                    repr, movesp = fast_str(child.cube), moves + [move]
+
+                    val = goal_test(child, repr, movesp)
+                    if val is not None: return val
+
+                    # if len(movesp) == depth:
+                    #     f.write(f"{repr}: {' '.join(movesp)}\n")
+
+                    if repr not in path and len(path) < depth:
+                        children, last = True, move
+                        stk[i].append((child, path | {repr}, movesp))
+    f.close()
+
+def IDsolve(start, target=(Cube(), solved), metric=HTM, maxdepth=float("INF"), filename="temp.pickle"):
+    rtn, depth = None, 0
+    while rtn is None and depth <= maxdepth:
+        rtn = IDdfs(start, target, metric, depth, filename)
+        print(depth)
+        depth += 1
+    return rtn
+
 def import_cube(fname):
     with open(fname) as f:
         data = [STR_INT[ch] for ch in f.read() if ch != " " and ch != "\n"]

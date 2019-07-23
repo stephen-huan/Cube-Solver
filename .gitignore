@@ -1,4 +1,4 @@
 .vscode
 __pycache__
-cache.pickle
+*.pickle
 training_data.txt
