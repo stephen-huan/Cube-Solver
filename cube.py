@@ -276,8 +276,8 @@ def IDdfs(start, target, metric, depth, filename):
                     val = goal_test(child, repr, movesp)
                     if val is not None: return val
 
-                    # if len(movesp) == depth:
-                    #     f.write(f"{repr}: {' '.join(movesp)}\n")
+                    if len(movesp) == depth:
+                        f.write(f"{repr}: {' '.join(movesp)}\n")
 
                     if repr not in path and len(path) < depth:
                         children, last = True, move
