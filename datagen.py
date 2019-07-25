@@ -1,5 +1,7 @@
 import sys, os, subprocess, pickle
 import cube as cb
+import representation as repr
+import solver
 
 try:
     import numpy as np
@@ -89,20 +91,22 @@ def save_data(filename, data, datatype=0):
     file_data = np.array(file_data)
     np.savetxt(filename, file_data)
 
-def cache(depth=5):
+def cache(depth=5, filename="cache.pickle"):
     cube = cb.Cube()
-    states, alg, seen = cb.solve(cube, (None, lambda cube, moves: len(moves) > depth), cb.HTM)
-    with open("cache.pickle", "wb") as f:
+    states, alg, seen = solver.solve(cube, (None, lambda cube, moves: len(moves) > depth), cb.HTM)
+    print("Dumping")
+    with open(filename, "wb") as f:
         pickle.dump(seen[0], f)
+    print("Done dumping")
 
-def load():
-    with open("cache.pickle", "rb") as f:
+def load(filename="cache.pickle"):
+    with open(filename, "rb") as f:
         return pickle.load(f)
 
 def IDcache(depth=5, filename="temp.pickle"):
     with open(filename, "w"): pass
     cube = cb.Cube()
-    cb.IDsolve(cube, (None, lambda cube, moves: False), cb.HTM, depth, filename)
+    solver.IDsolve(cube, (None, lambda cube, moves: False), cb.HTM, depth, filename)
 
 def IDload(filename="temp.pickle"):
     with open(filename) as f:
@@ -116,8 +120,9 @@ def IDload(filename="temp.pickle"):
     return d
 
 if __name__ == "__main__":
-    IDcache(5, "temp.pickle")
-    print(len(IDload()))
+    cache(5, "effecient_cache_6.pickle")
+    print("Done caching")
+    print(len(load("effecient_cache_6.pickle")))
 
     # save_data('training_data.csv', data)
     # cube = cb.Cube()
