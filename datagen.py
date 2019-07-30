@@ -92,19 +92,19 @@ def save_data(filename, data, datatype=0):
 def cache(depth=5):
     cube = cb.Cube()
     states, alg, seen = cb.solve(cube, (None, lambda cube, moves: len(moves) > depth), cb.HTM)
-    with open("cache.pickle", "wb") as f:
+    with open(f"{cb.PREFIX}cache.pickle", "wb") as f:
         pickle.dump(seen[0], f)
 
 def load():
-    with open("cache.pickle", "rb") as f:
+    with open(f"{cb.PREFIX}cache.pickle", "rb") as f:
         return pickle.load(f)
 
-def IDcache(depth=5, filename="temp.pickle"):
+def IDcache(depth=5, filename=f"{cb.PREFIX}temp.pickle"):
     with open(filename, "w"): pass
     cube = cb.Cube()
     cb.IDsolve(cube, (None, lambda cube, moves: False), cb.HTM, depth, filename)
 
-def IDload(filename="temp.pickle"):
+def IDprocess(filename=f"{cb.PREFIX}temp.pickle"):
     with open(filename) as f:
         seen = f.readlines()
 
@@ -113,11 +113,17 @@ def IDload(filename="temp.pickle"):
         repr, moves = line.split(": ")
         d[repr] = moves.strip().split(" ")
 
+    with open(f"{cb.PREFIX}test.pickle", "wb") as f:
+        pickle.dump(d, f)
+
     return d
 
+def IDload(filename="test.pickle"):
+    with open(f"{cb.PREFIX}test.pickle", "rb") as f:
+        return pickle.load(f)
+
 if __name__ == "__main__":
-    IDcache(5, "temp.pickle")
-    print(len(IDload()))
+    print(len(load()))
 
     # save_data('training_data.csv', data)
     # cube = cb.Cube()

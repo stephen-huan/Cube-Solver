@@ -1,4 +1,4 @@
-import itertools, pickle
+import itertools, pickle, inspect
 from collections import deque
 import colors
 
@@ -31,6 +31,8 @@ STR_NUM = {'': 1, '2': 2, "'": 3}
 NUM_STR = inv(STR_NUM)
 FACE = [G, R, B, O, W, Y] # Srikar specification
 x, y, z = ORIENT[R], ORIENT[W], ORIENT[G]
+
+PREFIX = "/Users/stephenhuan/datasets/cubing/"
 
 ### HELPER FUNCTIONS ###
 
@@ -152,6 +154,9 @@ def fast_str(m): return  "".join(map(str, mat_list(m)))
 
 def solved(cube, *args): return fast_str(cube.cube) == fast_str(get_solved_cube())
 
+def cubie_correct(cube, cubie):
+    intersect = [face for face in ORDER if cubie in cube.get_layer(face)]
+    return all(c == intersect[i] for i, c in enumerate(filter(lambda c: c is not None, access(cube.cube, cubie).colors)))
 
 class Cube:
 
@@ -206,7 +211,7 @@ class Cube:
 
 ### MORE STUFF ###
 
-def solve(start, target=(Cube(), solved), metric=HTM):
+def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
     goal, evaluate = target
 
     seen = [{}, {}]
@@ -215,6 +220,9 @@ def solve(start, target=(Cube(), solved), metric=HTM):
     poss = 1 if goal is None else 2
 
     def goal_test(node, repr, moves):
+        if repr in cache:
+            return states, " ".join(moves) + " " + inverse(cache[repr]), seen
+
         if repr in seen[i ^ 1] if goal is not None else evaluate(node, moves):
             if goal is None: return states, moves, seen
             prefix, suffix = (moves, seen[i ^ 1][repr]) if i == 0 else (seen[i ^ 1][repr], moves)
@@ -288,7 +296,7 @@ def IDsolve(start, target=(Cube(), solved), metric=HTM, maxdepth=float("INF"), f
     rtn, depth = None, 0
     while rtn is None and depth <= maxdepth:
         rtn = IDdfs(start, target, metric, depth, filename)
-        print(depth)
+        # print(depth)
         depth += 1
     return rtn
 
@@ -303,9 +311,13 @@ def import_cube(fname):
     return obj
 
 if __name__ == "__main__":
+    with open(f"{PREFIX}cache.pickle", "rb") as f:
+        cache = pickle.load(f)
+
     # cube = import_cube("test.txt")
     cube = Cube()
     cube.turn("R U' R U R U R U' R' U' R2")
     print(cube)
-    states, alg, seen = solve(cube, (Cube(), solved), HTM)
+    # states, alg, seen = solve(cube, (Cube(), solved), HTM)
+    states, alg, seen = solve(cube, (None, solved), HTM, cache)
     print(states, alg, len(tokenize(alg)))
