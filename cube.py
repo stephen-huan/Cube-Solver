@@ -31,11 +31,7 @@ NUM_STR = inv(STR_NUM)
 FACE = [G, R, B, O, W, Y] # Srikar specification
 x, y, z = ORIENT[R], ORIENT[W], ORIENT[G]
 
-<<<<<<< HEAD
 PREFIX = ""#/Users/stephenhuan/datasets/cubing/"
-=======
-PREFIX = "/Users/stephenhuan/datasets/cubing/"
->>>>>>> 25f20c80ff86ba974c61950c7169cfcbfa38d88a
 
 ### HELPER FUNCTIONS ###
 

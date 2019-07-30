@@ -97,8 +97,6 @@ def bfs_gen(fives, cache, num_data):
         solution = alg + suffix
         data[mixup] = solution
     return data
-        
-        
 
 def save_data(filename, data, datatype=0):
     DELIM = ';'
@@ -150,19 +148,55 @@ def IDload(filename="test.pickle"):
     with open(f"{cb.PREFIX}test.pickle", "rb") as f:
         return pickle.load(f)
 
-if __name__ == "__main__":
-    cache = load()
+def gen_6movers(fivers, cache, num):
+    data = {}
+    for i in range(num):
+        while True:
+            fiver = random.sample(fivers,1)[0]
+            seq = add_moves(fiver, 1)
+            cube = cb.Cube()
+            cube.turn(seq)
+            faststr = cb.fast_str(cube.cube)
+            if faststr not in cache:
+                data[faststr] = cb.inverse(seq)
+                break
+    return data
+        
+def get_fivers(cache):
     i = 0
     seqs = []
     for key in cache:
         if len(cache[key]) == 5:
             seqs.append(cache[key])
-    print(len(seqs))
-    data = bfs_gen(seqs, cache, 1000)
-    with open(f"{cb.PREFIX}bfs_data.pickle", "wb") as f:
+    return seqs
+
+def load_bfsdata(filename="bfs_data.pickle"):
+    with open(f"{cb.PREFIX}bfs_data.pickle", "rb") as f:
+        data = pickle.load(f)
+    #Print out distribution of data
+    avg = 0.0
+    distr = {}
+    for key in data:
+        solution = data[key]
+        avg += len(solution)
+        if len(solution) not in distr:
+            distr[len(solution)] = 1
+        else:
+            distr[len(solution)] = distr[len(solution)] + 1
+    avg /= len(data)
+    print(avg)
+    for d in sorted(distr):
+        print(d, distr[d])
+    
+
+if __name__ == "__main__":
+    cache = load()
+    fives = get_fivers(cache)
+    data = bfs_gen(fives, cache, 1000)
+    with open(f"{cb.PREFIX}bfs_gen.pickle", "wb") as f:
         pickle.dump(data, f)
     print("Done dumping")
-    
+
     # save_data('training_data.csv', data)
     # cube = cb.Cube()
     # cube.turn("U U F U U R' L F F U F' B' R L U U R U D' R L' D R' L' D D")
