@@ -1,5 +1,7 @@
 import sys, os, subprocess, pickle
 import cube as cb
+import representation as repr
+import solver
 
 try:
     import numpy as np
@@ -89,11 +91,12 @@ def save_data(filename, data, datatype=0):
     file_data = np.array(file_data)
     np.savetxt(filename, file_data)
 
-def cache(depth=5):
+def cache(depth=5, filename="cache.pickle"):
     cube = cb.Cube()
     states, alg, seen = cb.solve(cube, (None, lambda cube, moves: len(moves) > depth), cb.HTM)
     with open(f"{cb.PREFIX}cache.pickle", "wb") as f:
         pickle.dump(seen[0], f)
+    print("Done dumping")
 
 def load():
     with open(f"{cb.PREFIX}cache.pickle", "rb") as f:
@@ -102,7 +105,7 @@ def load():
 def IDcache(depth=5, filename=f"{cb.PREFIX}temp.pickle"):
     with open(filename, "w"): pass
     cube = cb.Cube()
-    cb.IDsolve(cube, (None, lambda cube, moves: False), cb.HTM, depth, filename)
+    solver.IDsolve(cube, (None, lambda cube, moves: False), cb.HTM, depth, filename)
 
 def IDprocess(filename=f"{cb.PREFIX}temp.pickle"):
     with open(filename) as f:

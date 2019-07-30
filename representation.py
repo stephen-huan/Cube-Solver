@@ -49,21 +49,31 @@ def edge_orient(edge):
     edge = str(edge).replace(" ", "")
     return int(cb.COLORS.index(edge[0]) > cb.COLORS.index(edge[1]))
 
+def bits_to_string(bits):
+    chars = []
+    for b in range(int(len(bits) / 8)):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
+
 def onehot_vector(index, length):
     l = [0]*length
     l[index] = 1
     return l
 
-def vectorize(n):
+def vectorize(cube):
     vector = []
     for piece_type in [(corner_indices, corner_map, 3), (edge_indices, edge_map, 2)]:
         piece_indicies, piece_map, poss = piece_type
-        pieces = [n.cube[i][j] for i, j in piece_indicies]
+        pieces = [cube[i][j] for i, j in piece_indicies]
         piece_loc = [piece_map["".join(sorted(str(piece).replace(" ", ""), key=lambda c: cb.COLORS.index(c)))] for piece in pieces]
         piece_orient = [cb.ORIENT[piece.colors[0]] for piece in pieces] if piece_indicies == corner_indices else map(edge_orient, pieces)
         vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
-
-    return "".join(map(str, cb.mat_list(vector)))
+    
+    return vector
+#    return bits_to_string(list(map(str, cb.mat_list(vector))))
+#    return int(''.join(map(str, cb.mat_list(vector))), 2)
+#    return "".join(map(str, cb.mat_list(vector)))
 
 def unvectorize(vec):
     cube = cb.get_solved_cube()

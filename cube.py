@@ -1,7 +1,6 @@
 import itertools, pickle, inspect
 from collections import deque
 import colors
-
 """
 Simulation of a Rubik's cube in Python.
 
@@ -152,6 +151,11 @@ def get_solved_cube(): return [[Cubie([W, None, Y][layer], [B, None, G][i], [O, 
 
 def fast_str(m): return  "".join(map(str, mat_list(m)))
 
+def faster_rep(m):
+    string = fast_str(m)
+    bin_string = ''.join([bin(ORDER[COLORS.index(i)] if i in COLORS else 6)[2:] for i in string])
+    return int(bin_string, 2)
+
 def solved(cube, *args): return fast_str(cube.cube) == fast_str(get_solved_cube())
 
 def cubie_correct(cube, cubie):
@@ -208,97 +212,6 @@ class Cube:
             number = 3 if number == "'" else int(number)
             for i in range(4 - number if turns[move] in FLIPPED else number):
                 self.move(turns[move])
-
-### MORE STUFF ###
-
-def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
-    goal, evaluate = target
-
-    seen = [{}, {}]
-    q = [deque([(start, [])]), deque([(goal, [])])]
-    states = 0
-    poss = 1 if goal is None else 2
-
-    def goal_test(node, repr, moves):
-        if repr in cache:
-            return states, " ".join(moves) + " " + inverse(cache[repr]), seen
-
-        if repr in seen[i ^ 1] if goal is not None else evaluate(node, moves):
-            if goal is None: return states, moves, seen
-            prefix, suffix = (moves, seen[i ^ 1][repr]) if i == 0 else (seen[i ^ 1][repr], moves)
-            return states, " ".join(prefix) + " " + inverse(suffix), seen
-
-    while len(q[0]) > 0 or len(q[1]) > 0:
-        for i in range(poss):
-            n, moves = q[i].popleft()
-
-            val = goal_test(n, fast_str(n.cube), moves)
-            if val is not None: return val
-
-            for move in metric.moves:
-                if len(moves) == 0 or move[0] != moves[-1][0]:
-                    states += 1
-                    child = Cube(n)
-                    child.turn(move)
-                    repr, movesp = fast_str(child.cube), moves + [move]
-
-                    val = goal_test(child, repr, movesp)
-                    if val is not None: return val
-
-                    if repr not in seen[i]:
-                        seen[i][repr] = movesp
-                        q[i].append((child, movesp))
-
-# TODO: make bidirectional
-def IDdfs(start, target, metric, depth, filename):
-    goal, evaluate = target
-
-    seen = [{}, {}]
-    stk = [(Cube(start), set(), [])], [(goal, set(), [])]
-    states = 0
-    poss = 1 if goal is None else 2
-
-    f = open(filename, "a")
-
-    def goal_test(node, repr, moves):
-        if repr in seen[i ^ 1] if goal is not None else evaluate(node, moves):
-            if goal is None: return states, moves
-            prefix, suffix = (moves, seen[i ^ 1][repr]) if i == 0 else (seen[i ^ 1][repr], moves)
-            return states, " ".join(prefix) + " " + inverse(suffix), seen
-
-    while len(stk[0]) > 0: #or len(stk[1]) > 0:
-        for i in range(poss):
-            n, path, moves = stk[i].pop()
-
-            val = goal_test(n, fast_str(n.cube), moves)
-            if val is not None: return val
-
-            children = False
-            for move in metric.moves:
-                if len(moves) == 0 or move[0] != moves[-1][0]:
-                    states += 1
-                    child = Cube(n)
-                    child.turn(move)
-                    repr, movesp = fast_str(child.cube), moves + [move]
-
-                    val = goal_test(child, repr, movesp)
-                    if val is not None: return val
-
-                    if len(movesp) == depth:
-                        f.write(f"{repr}: {' '.join(movesp)}\n")
-
-                    if repr not in path and len(path) < depth:
-                        children, last = True, move
-                        stk[i].append((child, path | {repr}, movesp))
-    f.close()
-
-def IDsolve(start, target=(Cube(), solved), metric=HTM, maxdepth=float("INF"), filename="temp.pickle"):
-    rtn, depth = None, 0
-    while rtn is None and depth <= maxdepth:
-        rtn = IDdfs(start, target, metric, depth, filename)
-        # print(depth)
-        depth += 1
-    return rtn
 
 def import_cube(fname):
     with open(fname) as f:
