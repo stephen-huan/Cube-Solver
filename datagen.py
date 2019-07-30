@@ -2,6 +2,7 @@ import sys, os, subprocess, pickle
 import cube as cb
 import representation as repr
 import solver
+import random
 
 try:
     import numpy as np
@@ -75,6 +76,30 @@ def solve_kociemba(n, verbose):
         enable_print()
 """
 
+def add_moves(sequence, num_moves, metric=cb.HTM):
+    sequence = [i for i in sequence]
+    sequence.extend([random.sample(metric.moves,1)[0] for i in range(num_moves)])
+    return sequence
+
+def bfs_gen(fives, cache, num_data):
+    data = {}
+    for i in range(num_data):
+        print(i)
+        extra_moves = random.randint(1,5)
+        seq = random.sample(fives,1)[0]
+        seq = add_moves(seq, extra_moves)
+        mixed = cb.Cube()
+        mixed.turn(seq)
+        states, alg, seen = cb.solve(mixed, (None, lambda cube, moves: cb.fast_str(cube.cube) in cache), cb.HTM)
+        mixup = cb.fast_str(mixed.cube)
+        mixed.turn(alg)
+        suffix = cb.inverse(cache[cb.fast_str(mixed.cube)]).split(" ")
+        solution = alg + suffix
+        data[mixup] = solution
+    return data
+        
+        
+
 def save_data(filename, data, datatype=0):
     DELIM = ';'
     file = open(filename, 'w+')
@@ -126,8 +151,18 @@ def IDload(filename="test.pickle"):
         return pickle.load(f)
 
 if __name__ == "__main__":
-    print(len(load()))
-
+    cache = load()
+    i = 0
+    seqs = []
+    for key in cache:
+        if len(cache[key]) == 5:
+            seqs.append(cache[key])
+    print(len(seqs))
+    data = bfs_gen(seqs, cache, 1000)
+    with open(f"{cb.PREFIX}bfs_data.pickle", "wb") as f:
+        pickle.dump(data, f)
+    print("Done dumping")
+    
     # save_data('training_data.csv', data)
     # cube = cb.Cube()
     # cube.turn("U U F U U R' L F F U F' B' R L U U R U D' R L' D R' L' D D")
