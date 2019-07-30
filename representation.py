@@ -1,5 +1,5 @@
 import cube as cb
-import numpy as np
+# import numpy as np
 
 """
 LEGEND:
@@ -69,7 +69,7 @@ def vectorize(cube):
         piece_loc = [piece_map["".join(sorted(str(piece).replace(" ", ""), key=lambda c: cb.COLORS.index(c)))] for piece in pieces]
         piece_orient = [cb.ORIENT[piece.colors[0]] for piece in pieces] if piece_indicies == corner_indices else map(edge_orient, pieces)
         vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
-    
+
     return vector
 #    return bits_to_string(list(map(str, cb.mat_list(vector))))
 #    return int(''.join(map(str, cb.mat_list(vector))), 2)
