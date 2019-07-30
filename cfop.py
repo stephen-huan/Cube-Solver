@@ -28,25 +28,6 @@ def cfop(cube, face=cb.W):
     return " ".join(solution)
 
 cube = cb.Cube()
-# cube.turn("U B2 R' U2 F2 D2 R F2 L' B2 D2 L B2 D' F2 R D U B' R F'")
-cube.turn("x' R' U R' D2 R U' R' D2 R2 x'")
-
-# # print(cross(cube))
-# cube.turn("x2 y R' F D' B' R'")
-# # print(cross(cube))
-
-# print(pair(cube))
-# cube.turn("x2 y L' U' L U' R U R' U2 R U' R'")
-# print(pair(cube))
-# cube.turn("x2 y2 U2 R U' R' F' U' F")
-# print(pair(cube))
-# cube.turn("x2 y' U2 R' U R U' R' U' R")
-# print(pair(cube))
-# cube.turn("x2 y' U' F' U' F U' R U R'")
-# print(pair(cube))
-
-# print(oll(cube))
-# cube.turn("x2 y' U2 F U R U' R' F'")
-# print(oll(cube))
+cube.turn("U B2 R' U2 F2 D2 R F2 L' B2 D2 L B2 D' F2 R D U B' R F'")
 
 print(cfop(cube))
