@@ -27,6 +27,18 @@ def cfop(cube, face=cb.W):
 
     return " ".join(solution)
 
+def do_until_solved(seq):
+    temp = cb.Cube()
+    temp.turn(seq)
+    i = 0
+    while not cb.solved(temp):
+        temp.turn(seq)
+        i += 1
+    return i + 1
+
+print(do_until_solved("R U'"))
+exit()
+
 cube = cb.Cube()
 cube.turn("U B2 R' U2 F2 D2 R F2 L' B2 D2 L B2 D' F2 R D U B' R F'")
 
