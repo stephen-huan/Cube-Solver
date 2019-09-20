@@ -117,7 +117,7 @@ if __name__ == "__main__":
     cube = cb.Cube()
     cube.turn("R F R2 U2")
     print(cube)
-    vector = vectorize(cube)
+    vector = vectorize(cube.cube)
     print(vector)
     cube1 = unvectorize(vector)
     print(cube1)
