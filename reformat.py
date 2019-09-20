@@ -5,7 +5,7 @@ Will be different for each datafile based on its format.
 
 import cube as cb
 import representation as repr
-
+from multiprocessing import Process
 seqs = set()
 
 def add(moves):
@@ -33,6 +33,8 @@ def htm(filename="data/htm.txt"):
                 elif move[-1] == "1":
                     move = move[0]
                 moves.append(move)
+            process = Process(target=add, args=(moves,))
+            process.start()
             add(moves)
             if len(seqs) > checkpoint:
                 print(checkpoint)
