@@ -5,23 +5,35 @@ Will be different for each datafile based on its format.
 
 import cube as cb
 import representation as repr
-from multiprocessing import Process
+from time import time
+
+global SAVED
+SAVED = 0
+SAVE_POINT = 10000
+filename = "reformatted.txt"
+file = open(filename, "a+")
 seqs = set()
 
-def add(moves):
+def add(seqs, moves):
     cube = cb.Cube()
     cube.turn(' '.join(moves))
     length = len(moves)
     for i in range(length):
-        vector = repr.vectorize(cube.cube)
-        seqs.add((''.join([''.join(list(map(str, i))) for i in vector]), length-i))
-        cube.turn(cb.opposite(moves[-i-1]))
+#        vector = repr.vectorize(cube.cube)
+#        seqs.add((''.join([''.join(list(map(str, i))) for i in vector]), length-i))
+#        cube.turn(cb.opposite(moves[-i-1]))
+        pass
+    if len(seqs) > SAVE_POINT:
+        save(seqs)
+        seqs = set()
 
-def htm(filename="data/htm.txt"):
+def htm(seqs, filename="data/htm.txt"):
     with open(filename, 'r') as file:
+        start = time()
         lines = file.readlines()
         print(len(lines))
         checkpoint = 0
+        index = 0
         for line in lines:
             line = line.strip()
             length = int(len(line) / 2) #Should be 20 for all of them but not sure
@@ -33,14 +45,17 @@ def htm(filename="data/htm.txt"):
                 elif move[-1] == "1":
                     move = move[0]
                 moves.append(move)
-            process = Process(target=add, args=(moves,))
-            process.start()
-            add(moves)
-            if len(seqs) > checkpoint:
+#            process = Process(target=add, args=(moves,))
+#            process.start()
+            add(seqs, moves)
+            if index > checkpoint:
                 print(checkpoint)
+                print(time() - start)
+                start = time()
                 checkpoint += 10000
+            index += 1
 
-def _100k(filename="data/100000optcubes.txt"):
+def _100k(seqs, filename="data/100000optcubes.txt"):
     with open(filename, 'r') as file:
         lines = file.readlines()
         print(len(lines))
@@ -48,17 +63,20 @@ def _100k(filename="data/100000optcubes.txt"):
         for line in lines:
             line = line.strip()
             moves = line[:line.index("(")-1].strip().split(" ")
-            add(moves)
-            if len(seqs) > checkpoint:
+            add(seqs, moves)
+            if SAVED > checkpoint:
                 print(checkpoint)
                 checkpoint += 10000
 
-def save(filename):
-    with open(filename, "a+") as file:
-        for vector, distance in seqs:
-            file.write(vector + " " + str(distance) + "\n")
-        file.close()
-htm()
-_100k()
-
-save(filename="reformatted.txt")
+def save(seqs):
+    global SAVED
+    for vector, distance in seqs:
+        file.write(vector + " " + str(distance) + "\n")
+    SAVED += len(seqs)
+    
+htm(seqs)
+_100k(seqs)
+save(seqs)
+seqs = set()
+file.close()
+#save(filename="reformatted.txt")
