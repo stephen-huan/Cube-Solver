@@ -1,5 +1,6 @@
 import itertools, pickle, inspect
 from collections import deque
+from time import time
 import colors
 """
 Simulation of a Rubik's cube in Python.
@@ -165,10 +166,11 @@ def cubie_correct(cube, cubie):
 
 class Cube:
 
-    def __init__(self, other=None):
+    def __init__(self, other=None, init_cube=True):
         #WGROBY, standard color scheme
         #layer by layer starting from the top; top - down left - right
-        self.cube = get_solved_cube() if other is None else [[Cubie(*cubie.colors) for cubie in layer] for layer in other.cube]
+        if init_cube:
+            self.cube = get_solved_cube() if other is None else [[Cubie(*cubie.colors) for cubie in layer] for layer in other.cube]
         self.turns = dict(zip("UDFBRL", ORDER))
         self.layers = {0: self.get_ud_layer, 1: self.get_fb_layer, 2:self.get_lr_layer}
 
@@ -282,6 +284,7 @@ class StickerCube:
         temp = [self.cube[temp[0]][temp[1]][temp[2]] for temp in seq[i]]
         first = True
         length = len(seq)
+        start = time()
         while i != 0 or first:
             curr = seq[i]
             want = seq[(i + diff) % length]
@@ -294,6 +297,8 @@ class StickerCube:
         for j in range(len(temp)):
             temp1 = want[j]
             self.cube[temp1[0]][temp1[1]][temp1[2]] = temp[j]
+        end = time() - start
+        return end
 
     def move(self, move, num):
         diff = 1 if num == 3 else -1
@@ -413,17 +418,17 @@ def import_cube(fname):
     return obj
 
 def speedtest():
-    from time import time
     start = time()
-    cube = Cube()
-    moves = "R U R' U' D F D' F' B L B' L'"
-    print(tokenize(rotation(moves)))
+    cube = StickerCube()
+    s1, s2, s3 = cube.move_dict["R"]
+    print(len(s1), len(s2), len(s3))
+    moves = "R U R' U'"
     for i in range(10000):
-        moves = "R U R' U' D F D' F' B L B' L'"
-        cube.turn(moves)
-#        print(tokenize(rotation(moves)))
-#        cube.turn("R U R' U' D F D' F' B L B' L'")
-    print(time()-start)
+        cube.follow_seq(s1, 1)
+        cube.follow_seq(s2, 1)
+        cube.follow_seq(s3, 1)
+    print("Sticker Turn Time:", time()-start)
+
 
 if __name__ == "__main__":
     speedtest()
@@ -434,7 +439,7 @@ if __name__ == "__main__":
 #    cube2.turn("R U R' L F D' U' F L' B2 R' U2 L")
 #    print(cube2)
 
-if __name__ != "__main__":
+""" if __name__ == "__main__":
     with open(f"{PREFIX}cache.pickle", "rb") as f:
         cache = pickle.load(f)
 
@@ -445,3 +450,4 @@ if __name__ != "__main__":
     # states, alg, seen = solve(cube, (Cube(), solved), HTM)
     states, alg, seen = solve(cube, (None, solved), HTM, cache)
     print(states, alg, len(tokenize(alg)))
+ """

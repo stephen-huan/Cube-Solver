@@ -3,3 +3,4 @@ __pycache__
 *.pickle
 training_data.txt
 data/
+raw_data/

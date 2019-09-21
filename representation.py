@@ -68,12 +68,12 @@ def vectorize(cube):
         pieces = [cube[i][j] for i, j in piece_indicies]
         piece_loc = [piece_map["".join(sorted(str(piece).replace(" ", ""), key=lambda c: cb.COLORS.index(c)))] for piece in pieces]
         piece_orient = [cb.ORIENT[piece.colors[0]] for piece in pieces] if piece_indicies == corner_indices else map(edge_orient, pieces)
-        vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
+        vector.extend(piece_loc)
+        vector.extend(piece_orient)
+#        vector += [(pos, len(piece_loc)) + (ori, poss) for pos,ori in zip(piece_loc, piece_orient)]
+#        vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
 
     return vector
-#    return bits_to_string(list(map(str, cb.mat_list(vector))))
-#    return int(''.join(map(str, cb.mat_list(vector))), 2)
-#    return "".join(map(str, cb.mat_list(vector)))
 
 def unvectorize(vec):
     cube = cb.get_solved_cube()
@@ -113,12 +113,25 @@ def unvectorize(vec):
     ret.cube = cube
     return ret
 
+#vectorize(cb.Cube().cube)
+
 if __name__ == "__main__":
+    from time import time
+    start = time()
+    cube = cb.StickerCube()
+    for i in range(10000):
+        cube.turn("R")
+        temp = [i for i in cube.cube]
+        temp = [temp[0], temp[3], temp[1], temp[2], temp[4], temp[5]]
+        vector = vectorize(cb.str_cubies(temp))
+    print(time()-start)
+
+    start = time()
     cube = cb.Cube()
-    cube.turn("R F R2 U2")
-    print(cube)
-    vector = vectorize(cube.cube)
-    print(vector)
-    cube1 = unvectorize(vector)
-    print(cube1)
-    print(cube.to_face())
+    for i in range(10000):
+        cube.turn("R")
+        vector = vectorize(cube.cube)
+    print(time()-start)
+#    cube1 = unvectorize(vector)
+#    print(cube1)
+#    print(cube.to_face())
