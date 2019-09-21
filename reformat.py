@@ -20,6 +20,7 @@ def add(seqs, moves):
     length = len(moves)
     for i in range(length):
         vector = repr.vectorize(cube.cube)
+        vector = [str(i) for i in vector]
         seqs.add((','.join(vector), length-i))
         cube.turn(cb.opposite(moves[-i-1]))
     if len(seqs) > SAVE_POINT:
