@@ -19,10 +19,9 @@ def add(seqs, moves):
     cube.turn(' '.join(moves))
     length = len(moves)
     for i in range(length):
-#        vector = repr.vectorize(cube.cube)
-#        seqs.add((''.join([''.join(list(map(str, i))) for i in vector]), length-i))
-#        cube.turn(cb.opposite(moves[-i-1]))
-        pass
+        vector = repr.vectorize(cube.cube)
+        seqs.add((','.join(vector), length-i))
+        cube.turn(cb.opposite(moves[-i-1]))
     if len(seqs) > SAVE_POINT:
         save(seqs)
         seqs = set()
@@ -71,7 +70,8 @@ def _100k(seqs, filename="data/100000optcubes.txt"):
 def save(seqs):
     global SAVED
     for vector, distance in seqs:
-        file.write(vector + " " + str(distance) + "\n")
+        output += vector + ";" + str(distance) + "\n"
+    file.write(output)
     SAVED += len(seqs)
     
 htm(seqs)
