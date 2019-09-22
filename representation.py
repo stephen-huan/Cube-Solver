@@ -37,7 +37,7 @@ corner_map_inverse = cb.inv(corner_map)
 corner_indices = [(0, 0), (0, 2), (0, 6), (0, 8), (2, 0), (2, 2), (2, 6), (2, 8)]
 
 edge_map = {
-    'WB': 0,
+    'WB ': 0,
     'WO ': 1,
     'WR ': 2,
     'WG ': 3,
@@ -52,7 +52,7 @@ edge_map = {
 }
 
 edge_lookup = {}
-for key in corner_map:
+for key in edge_map:
     edge_lookup[key] = key
     arr = [*key]
     perms = [(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]
@@ -86,25 +86,25 @@ def vectorize(cube):
     corner_loc, corner_orient, edge_loc, edge_orient = [],[],[],[]
     corners = [cube[i][j] for i,j in corner_indices]
     for corner in corners:
-        temp = corner_lookup[str(corner)]
-        corner_loc.append(temp)
-        corner_orient.append(cb.ORIENT[corner.colors[0]])
+        temp = corner_map[corner_lookup[str(corner)]]
+        corner_loc.append(str(temp))
+        corner_orient.append(str(cb.ORIENT[corner.colors[0]]))
 
     edges = [cube[i][j] for i,j in edge_indices]
     for edge in edges:
-        temp = corner_lookup[str(corner)]
-        edge_loc.append(temp)
-        edge_orient.append(edge in edge_map)
+        temp = edge_map[edge_lookup[str(edge)]]
+        edge_loc.append(str(temp))
+        edge_orient.append(str(1 if edge in edge_map else 0))
     
     vector = []
-    for i in corner_loc:
-        vector.append(i)
-    for i in corner_orient:
-        vector.append(i)
-    for i in edge_loc:
-        vector.append(i)
-    for i in edge_orient:
-        vector.append(i)
+#    for i in corner_loc:
+    vector.append(';'.join(corner_loc))
+#    for i in corner_orient:
+    vector.append(int(''.join(corner_orient),3)) #Convert this to a decimal number so it takes up less space, basically do ternary -> decimal
+#    for i in edge_loc:
+    vector.append(';'.join(edge_loc))
+#    for i in edge_orient:
+    vector.append(int(''.join(edge_orient),2)) #Same as corner_orient, except binary
 
 #        vector += [(pos, len(piece_loc)) + (ori, poss) for pos,ori in zip(piece_loc, piece_orient)]
 #        vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]

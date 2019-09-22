@@ -8,7 +8,7 @@ import representation as repr
 from time import time
 from multiprocessing import Process, freeze_support
 
-NUM_PROCESSES = 2
+NUM_PROCESSES = 1
 
 def add(moves, files):
     cube = cb.Cube()
@@ -18,7 +18,7 @@ def add(moves, files):
         fast = cb.fast_str(cube.cube)
         vector = repr.vectorize(cube.cube)
         vector = [str(i) for i in vector]
-        files[length-i].write(''.join(vector))
+        files[length-i].write(' '.join(vector) + '\n')
         cube.turn(cb.opposite(moves[-i-1]))
 
 def htm_parse(line):
@@ -32,6 +32,11 @@ def htm_parse(line):
         elif move[-1] == "1":
             move = move[0]
         moves.append(move)
+    return moves
+
+def _100k_parse(line):
+    line = line.strip()
+    moves = line[:line.index("(")-1].strip().split(" ")
     return moves
 
 def process(lines, pnum, parser):
@@ -55,6 +60,7 @@ def process(lines, pnum, parser):
         index += 1
     for file in files:
         file.close()
+    print("Finished", pnum)
 
 def run(filename, parser):
     with open(filename, 'r') as file:
@@ -64,15 +70,11 @@ def run(filename, parser):
             proc = Process(target=process, args=(lines[pnum*each:(pnum+1)*each], pnum, parser))
             proc.daemon = True
             proc.start()
-        x = input()      
-
-def _100k_parse(line):
-    line = line.strip()
-    moves = line[:line.index("(")-1].strip().split(" ")
-    return moves
+        x = input()
 
 if __name__ == "__main__":
     freeze_support()
+    run("raw_data/htm.txt", htm_parse)
     run("raw_data/100000optcubes.txt", _100k_parse)
 #_100k()
 #seqs = set()
