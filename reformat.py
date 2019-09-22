@@ -71,23 +71,9 @@ def _100k_parse(line):
     moves = line[:line.index("(")-1].strip().split(" ")
     return moves
 
-def _100k_parse():
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-        print(len(lines))
-        checkpoint = 0
-        index = 0
-        for line in lines:
-            line = line.strip()
-            moves = line[:line.index("(")-1].strip().split(" ")
-            if index > checkpoint:
-                print(checkpoint)
-                checkpoint += 1000
-            index += 1
-
 if __name__ == "__main__":
     freeze_support()
-    run("raw_data/htm.txt", _100k_parse)
+    run("raw_data/100000optcubes.txt", _100k_parse)
 #_100k()
 #seqs = set()
 #save(filename="reformatted.txt")
