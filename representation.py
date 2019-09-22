@@ -23,29 +23,50 @@ corner_map = {
     'YGR': 7,
 }
 
+corner_lookup = {}
+for key in corner_map:
+    corner_lookup[key] = key
+    arr = [*key]
+    perms = [(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]
+    for a,b,c in perms:
+        arr = [arr[a],arr[b],arr[c]]
+        corner_lookup[''.join(arr)] = key
+        arr = [*key]
+
 corner_map_inverse = cb.inv(corner_map)
 corner_indices = [(0, 0), (0, 2), (0, 6), (0, 8), (2, 0), (2, 2), (2, 6), (2, 8)]
 
 edge_map = {
     'WB': 0,
-    'WO': 1,
-    'WR': 2,
-    'WG': 3,
-    'BO': 4,
-    'BR': 5,
-    'GO': 6,
-    'GR': 7,
-    'YB': 8,
-    'YO': 9,
-    'YR': 10,
-    'YG': 11,
+    'WO ': 1,
+    'WR ': 2,
+    'WG ': 3,
+    'BO ': 4,
+    'BR ': 5,
+    'GO ': 6,
+    'GR ': 7,
+    'YB ': 8,
+    'YO ': 9,
+    'YR ': 10,
+    'YG ': 11,
 }
+
+edge_lookup = {}
+for key in corner_map:
+    edge_lookup[key] = key
+    arr = [*key]
+    perms = [(0,1,2),(0,2,1),(1,0,2),(1,2,0),(2,0,1),(2,1,0)]
+    for a,b,c in perms:
+        arr = [arr[a],arr[b],arr[c]]
+        edge_lookup[''.join(arr)] = key
+        arr = [*key]
+
 
 edge_map_inverse = cb.inv(edge_map)
 edge_indices = [(0,1), (0,3), (0,5), (0,7), (1,0), (1,2), (1,6), (1,8), (2,1), (2,3), (2,5), (2,7)]
 edge_gap_positions = [2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2]
 
-def edge_orient(edge):
+def edgeOrient(edge):
     edge = str(edge).replace(" ", "")
     return int(cb.COLORS.index(edge[0]) > cb.COLORS.index(edge[1]))
 
@@ -62,14 +83,29 @@ def onehot_vector(index, length):
     return l
 
 def vectorize(cube):
+    corner_loc, corner_orient, edge_loc, edge_orient = [],[],[],[]
+    corners = [cube[i][j] for i,j in corner_indices]
+    for corner in corners:
+        temp = corner_lookup[str(corner)]
+        corner_loc.append(temp)
+        corner_orient.append(cb.ORIENT[corner.colors[0]])
+
+    edges = [cube[i][j] for i,j in edge_indices]
+    for edge in edges:
+        temp = corner_lookup[str(corner)]
+        edge_loc.append(temp)
+        edge_orient.append(edge in edge_map)
+    
     vector = []
-    for piece_type in [(corner_indices, corner_map, 3), (edge_indices, edge_map, 2)]:
-        piece_indicies, piece_map, poss = piece_type
-        pieces = [cube[i][j] for i, j in piece_indicies]
-        piece_loc = [piece_map["".join(sorted(str(piece).replace(" ", ""), key=lambda c: cb.COLORS.index(c)))] for piece in pieces]
-        piece_orient = [cb.ORIENT[piece.colors[0]] for piece in pieces] if piece_indicies == corner_indices else map(edge_orient, pieces)
-        vector.extend(piece_loc)
-        vector.extend(piece_orient)
+    for i in corner_loc:
+        vector.append(i)
+    for i in corner_orient:
+        vector.append(i)
+    for i in edge_loc:
+        vector.append(i)
+    for i in edge_orient:
+        vector.append(i)
+
 #        vector += [(pos, len(piece_loc)) + (ori, poss) for pos,ori in zip(piece_loc, piece_orient)]
 #        vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
 
@@ -85,7 +121,7 @@ def unvectorize(vec):
             corner_str = corner_str[1:] + corner_str[0]
         original_in = i in [0,3,5,6]
         new_in = corner_pos in [0,3,5,6]
-        if original_in ^ new_in:
+        if original_in ^ new_in == True:
             corner_arr = list(corner_str)
             corner_arr[2], corner_arr[1] = corner_arr[1], corner_arr[2]
             corner_str = ''.join(corner_arr)
@@ -113,25 +149,19 @@ def unvectorize(vec):
     ret.cube = cube
     return ret
 
-#vectorize(cb.Cube().cube)
-
-if __name__ == "__main__":
+def speedtest():
     from time import time
-    start = time()
-    cube = cb.StickerCube()
-    for i in range(10000):
-        cube.turn("R")
-        temp = [i for i in cube.cube]
-        temp = [temp[0], temp[3], temp[1], temp[2], temp[4], temp[5]]
-        vector = vectorize(cb.str_cubies(temp))
-    print(time()-start)
-
     start = time()
     cube = cb.Cube()
     for i in range(10000):
         cube.turn("R")
         vector = vectorize(cube.cube)
     print(time()-start)
+
+if __name__ == "__main__":
+    speedtest()
+
+    
 #    cube1 = unvectorize(vector)
 #    print(cube1)
 #    print(cube.to_face())
