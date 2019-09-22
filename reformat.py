@@ -61,9 +61,9 @@ def run(filename, parser):
         lines = file.readlines()
         each = len(lines) // NUM_PROCESSES
         for pnum in range(NUM_PROCESSES):
-            process = Process(target=process, args=(lines[pnum*each:(pnum+1)*each], pnum, parser))
-            process.daemon = True
-            process.start()
+            proc = Process(target=process, args=(lines[pnum*each:(pnum+1)*each], pnum, parser))
+            proc.daemon = True
+            proc.start()
         x = input()      
 
 def _100k_parse(line):
