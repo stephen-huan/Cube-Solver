@@ -21,17 +21,20 @@ def add(moves, files):
         files[length-i].write(''.join(vector))
         cube.turn(cb.opposite(moves[-i-1]))
 
-def htm(filename="raw_data/htm.txt"):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-        each = len(lines) // NUM_PROCESSES
-        for pnum in range(NUM_PROCESSES):
-            process = Process(target=process_htm, args=(lines[pnum*each:(pnum+1)*each],pnum))
-            process.daemon = True
-            process.start()
-        x = input()            
+def htm_parse(line):
+    line = line.strip()
+    length = int(len(line) / 2)
+    moves = []
+    for i in range(length):
+        move = line[i*2:i*2+2]
+        if move[-1] == "3":
+            move = move[0] + "'"
+        elif move[-1] == "1":
+            move = move[0]
+        moves.append(move)
+    return moves
 
-def process_htm(lines, pnum):
+def process(lines, pnum, parser):
     filename = "data/reformatted%s_%s.txt"
     start = time()
     files = []
@@ -42,18 +45,7 @@ def process_htm(lines, pnum):
     checkpoint = 0
     index = 0
     for line in lines:
-        line = line.strip()
-        length = int(len(line) / 2) #Should be 20 for all of them but not sure
-        moves = []
-        for i in range(length):
-            move = line[i*2:i*2+2]
-            if move[-1] == "3":
-                move = move[0] + "'"
-            elif move[-1] == "1":
-                move = move[0]
-            moves.append(move)
-#            process = Process(target=add, args=(moves,))
-#            process.start()
+        moves = parser(line)
         add(moves, files)
         if index > checkpoint:
             print(checkpoint)
@@ -64,7 +56,22 @@ def process_htm(lines, pnum):
     for file in files:
         file.close()
 
-def _100k(filename="raw_data/100000optcubes.txt"):
+def run(filename, parser):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        each = len(lines) // NUM_PROCESSES
+        for pnum in range(NUM_PROCESSES):
+            process = Process(target=process, args=(lines[pnum*each:(pnum+1)*each], pnum, parser))
+            process.daemon = True
+            process.start()
+        x = input()      
+
+def _100k_parse(line):
+    line = line.strip()
+    moves = line[:line.index("(")-1].strip().split(" ")
+    return moves
+
+def _100k_parse():
     with open(filename, 'r') as file:
         lines = file.readlines()
         print(len(lines))
@@ -78,17 +85,9 @@ def _100k(filename="raw_data/100000optcubes.txt"):
                 checkpoint += 1000
             index += 1
 
-def save(seqs):
-    global SAVED
-    output = ""
-    for vector, distance in seqs:
-        output += vector + ";" + str(distance) + "\n"
-    file.write(output)
-    SAVED += len(seqs)
-    
 if __name__ == "__main__":
     freeze_support()
-    htm()
+    run("raw_data/htm.txt", _100k_parse)
 #_100k()
 #seqs = set()
 #save(filename="reformatted.txt")
