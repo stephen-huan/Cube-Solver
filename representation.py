@@ -1,5 +1,5 @@
 import cube as cb
-# import numpy as np
+import numpy as np
 
 """
 LEGEND:
@@ -61,7 +61,7 @@ for key in edge_map:
         edge_lookup[''.join(arr)] = key
         arr = [*key]
 
-
+edge_correct_ori = set([i.replace(" ","") for i in edge_map])
 edge_map_inverse = cb.inv(edge_map)
 edge_indices = [(0,1), (0,3), (0,5), (0,7), (1,0), (1,2), (1,6), (1,8), (2,1), (2,3), (2,5), (2,7)]
 edge_gap_positions = [2, 1, 1, 2, 0, 0, 0, 0, 2, 1, 1, 2]
@@ -82,7 +82,7 @@ def onehot_vector(index, length):
     l[index] = 1
     return l
 
-def vectorize(cube):
+def vectorize(cube, compress = False):
     corner_loc, corner_orient, edge_loc, edge_orient = [],[],[],[]
     corners = [cube[i][j] for i,j in corner_indices]
     for corner in corners:
@@ -94,28 +94,37 @@ def vectorize(cube):
     for edge in edges:
         temp = edge_map[edge_lookup[str(edge)]]
         edge_loc.append(str(temp))
-        edge_orient.append(str(1 if edge in edge_map else 0))
+        edge_orient.append(str(0 if str(edge).replace(" ", "") in edge_correct_ori else 1))
     
     vector = []
-#    for i in corner_loc:
-    vector.append(';'.join(corner_loc))
-#    for i in corner_orient:
-    vector.append(int(''.join(corner_orient),3)) #Convert this to a decimal number so it takes up less space, basically do ternary -> decimal
-#    for i in edge_loc:
-    vector.append(';'.join(edge_loc))
-#    for i in edge_orient:
-    vector.append(int(''.join(edge_orient),2)) #Same as corner_orient, except binary
+    if compress:
+        vector.append(';'.join(corner_loc))
+        vector.append(int(''.join(corner_orient),3)) #Convert this to a decimal number so it takes up less space, basically do ternary -> decimal
+        vector.append(';'.join(edge_loc))
+        vector.append(int(''.join(edge_orient),2)) #Same as corner_orient, except binary
 
+#    else:
 #        vector += [(pos, len(piece_loc)) + (ori, poss) for pos,ori in zip(piece_loc, piece_orient)]
 #        vector += [onehot_vector(pos, len(piece_loc)) + (onehot_vector(ori, poss)) for pos, ori in zip(piece_loc, piece_orient)]
 
     return vector
 
-def unvectorize(vec):
+def unvectorize(vec, compressed = False):
     cube = cb.get_solved_cube()
+    if compressed:
+        split = vec.strip().split(" ")
+        corner_posses = split[0].split(";")
+        corner_oris = str(np.base_repr(int(split[1]), 3))
+        corner_oris = "0"*(8 - len(corner_oris)) + corner_oris
+        edge_posses = split[2].split(";")
+        edge_oris = str(np.base_repr(int(split[3]), 2))
+        edge_oris = "0"*(12 - len(edge_oris)) + edge_oris
 
     for i in range(8):
-        corner_pos, corner_ori = vec[i*11:i*11+8].index('1'), vec[i*11+8:i*11+11].index('1')
+        if compressed:
+            corner_pos, corner_ori = int(corner_posses[i]), int(corner_oris[i])
+        else:
+            corner_pos, corner_ori = vec[i*11:i*11+8].index('1'), vec[i*11+8:i*11+11].index('1')
         corner_str = corner_map_inverse[corner_pos]
         for j in range(corner_ori):
             corner_str = corner_str[1:] + corner_str[0]
@@ -129,10 +138,17 @@ def unvectorize(vec):
         cube[corner_indices[i][0]][corner_indices[i][1]] = cubie
 
     for i in range(12):
-        edge_pos, edge_ori = vec[i*14+88:i*14+100].index('1'), vec[i*14+100:i*14+102].index('1')
+        if compressed:
+            edge_pos, edge_ori = int(edge_posses[i]), int(edge_oris[i])
+        else:
+            edge_pos, edge_ori = vec[i*14+88:i*14+100].index('1'), vec[i*14+100:i*14+102].index('1')
         edge_str = edge_map_inverse[edge_pos]
         if edge_ori == 1:
             edge_str = edge_str[::-1]
+            if edge_str[0] == " ":
+                edge_str = edge_str[1:] + " "
+            elif edge_str[-1] == " ":
+                edge_str = " " + edge_str[1:]
         cubie_arr = []
         gap_index = edge_gap_positions[i]
         temp = 0
@@ -159,7 +175,21 @@ def speedtest():
     print(time()-start)
 
 if __name__ == "__main__":
-    speedtest()
+    file = open("data/removed/removed_1.txt","r")
+    lines = file.readlines()
+    file.close()
+    import random
+    for i in range(100000):
+        cub = cb.Cube()
+        for j in range(15):
+            thing = random.choice(["R", "R2", "R'", "L", "L2", "L'", "B", "B2", "B'", "U", "U2", "U'", "F", "F2", "F'", "D", "D2", "D'"])
+            cub.turn(thing)
+        if str(unvectorize(' '.join([str(i) for i in vectorize(cub.cube, True)]), True)) == str(cub) == False:
+            print(cub.cube)
+#        print(vectorize(cub.cube, True))
+#        print(unvectorize(' '.join([str(i) for i in vectorize(cub.cube, True)]), True))
+#        print()
+#    speedtest()
 
     
 #    cube1 = unvectorize(vector)
