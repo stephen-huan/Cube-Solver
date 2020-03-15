@@ -194,7 +194,7 @@ class Cube:
     def get_ud_layer(self, layer): return list(zip([layer]*9, range(9)))
 
     def get_layer(self, face):
-        
+
         return self.layers[ORIENT[face]](0 if face in [W, B, O] else 2)
 
     def to_face(self, order=range(6)):
@@ -214,7 +214,7 @@ class Cube:
             move, number = move[0], move[1:] if len(move) > 1 else 1
             number = 3 if number == "'" else int(number)
             for i in range(4 - number if self.turns[move] in FLIPPED else number):
-                self.move(self.turns[move])    
+                self.move(self.turns[move])
 
 def sticker_move_dict():
     reverse = lambda arr: list(reversed(arr))
@@ -262,7 +262,7 @@ class StickerCube:
         out += "\n" + horz_join(*map(mat_str, [cube[face] for face in [O, G, R, B]]))
         out += "\n" + horz_join((" "*5 + "\n")*3, mat_str(cube[-1]))
         return out
-        
+
     def to_face(self):
         return [[[INT_STR[i] for i in j] for j in k] for k in self.cube]
 
@@ -314,7 +314,7 @@ class StickerCube:
             move, number = move[0], move[1:] if len(move) > 1 else 1
             number = 3 if number == "'" else int(number)
             self.move(move, number)
-    
+
 ### MORE STUFF ###
 
 def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
@@ -411,7 +411,6 @@ def import_cube(fname):
         data = [STR_INT[ch] for ch in f.read() if ch != " " and ch != "\n"]
 
     cube = [list_mat(data[:9])] + [[data[i:i + 3] for i in range(j, 43, 12)] for j in range(9, 21, 3)] + [list_mat(data[-9:])]
-    print(cube)
 
     obj = Cube()
     obj.cube = str_cubies(cube)
