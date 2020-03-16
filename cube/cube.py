@@ -1,7 +1,7 @@
 import itertools, pickle, inspect
 from collections import deque
 from time import time
-import colors
+import cube.colors as colors
 """
 Simulation of a Rubik's cube in Python.
 
