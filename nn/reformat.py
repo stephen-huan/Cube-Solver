@@ -1,6 +1,8 @@
 """
 Used to reformat data that we downloaded.
 Will be different for each datafile based on its format.
+Reformatted format:
+
 """
 
 import cube as cb

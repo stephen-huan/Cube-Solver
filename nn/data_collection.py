@@ -23,5 +23,5 @@ def remove_duplicates(pattern, length, new_pattern):
         file_removed.write('\n'.join(distinct))
 
 if __name__ == '__main__':
-#    merge_multiprocess("data/merged/reformatted%s_%s.txt", 16, 21, "data/merged/merged_%s.txt")
+#    merge_multiprocess("data/reformatted/reformatted%s_%s.txt", 16, 21, "data/merged/merged_%s.txt")
     remove_duplicates('data/merged/merged_%s.txt', 21, 'data/removed/removed_%s.txt')
