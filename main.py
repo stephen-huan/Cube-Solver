@@ -3,7 +3,19 @@ import cube.cube as cube
 import numpy as np
 from linear.linear import *
 
+def diag(m):
+    values, vectors = np.linalg.eig(move_mat(m, moves))
+    d = np.diag(np.round(values, 3))
+    return vectors, d
+
 if __name__ == "__main__":
+    # U move written as other moves
+    # c = cube.Cube()
+    # c.turn("U")
+    # noU = cube.Metric(cube.mat_list(((move, move + "'", move + "2") for move in "DFBRL")))
+    # print(cube.IDsolve(c, metric=noU)[:-1])
+    # exit()
+
     ### TESTING GENERATION AND EQUAL TO MOVE
 
     c = distinct_cube()
@@ -46,9 +58,21 @@ if __name__ == "__main__":
     TPERM = "R U R' U' R' F R2 U' R' U' R U R' F'"
     SUPERFLIP = "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"
     CHECKER = "F2 B2 U2 D2 R2 L2"
+    UPERM = "R2 U R U R' U' R' U' R' U R'"
 
     T = move_mat(TPERM, moves)
     # print(pretty(T))
+
+    U = move_mat(UPERM, moves)
+    # print(pretty(U))
+    # u = np.linalg.eig(U)[1][0]
+    # print(np.array_equal(U @ u, u))
+    # print(set(np.linalg.eigvals(U)))
+    # print(set(np.linalg.eigvals(move_mat("U", moves))))
+    p, d = diag(TPERM)
+    pi = np.linalg.inv(p)
+    print(d)
+    print(np.array_equal(np.round(p @ d @ pi, 3), T))
 
     ### DIFFICULT SERIES OF MOVES
     # Calculating (((((F' D R' D U2)k (D' R D' F U2)k)k (R' U R' F L2)k)k (R D' F U2 D')k)k (D F' D R' U2)k)k
