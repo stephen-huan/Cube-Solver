@@ -8,6 +8,10 @@ def diag(m):
     d = np.diag(np.round(values, 3))
     return vectors, d
 
+def mult(l1: list, l2: list) -> list:
+    """ Applies permutation l2 to l1. """
+    return [l1[n] for n in l2]
+
 if __name__ == "__main__":
     # U move written as other moves
     # c = cube.Cube()
@@ -15,6 +19,8 @@ if __name__ == "__main__":
     # noU = cube.Metric(cube.mat_list(((move, move + "'", move + "2") for move in "DFBRL")))
     # print(cube.IDsolve(c, metric=noU)[:-1])
     # exit()
+
+    print(mult(["a", "b", "c", "d", "e"], [2, 4, 0, 1, 3]))
 
     ### TESTING GENERATION AND EQUAL TO MOVE
 
