@@ -90,7 +90,7 @@ def opposite(move): return move[0] + {"'": "", "2":"2"}.get(move[-1], "'")
 def inverse(moves): return " ".join(reversed(list(map(opposite, tokenize(moves)))))
 
 def rotate(orient, dir):
-    indexes = [(i,) for i, c in enumerate(orient) if ORIENT[c] != dir]
+    indexes = [(i,) for i, c in enumerate(orient) if i//2 != dir]
     i, j = (-1, -2) if dir != z else (0, 1)
     i, j = indexes[i][0], indexes[j][0]
     cycle(orient, indexes)
@@ -98,12 +98,12 @@ def rotate(orient, dir):
     orient[i], orient[j] = orient[j], orient[i]
     return orient
 
-def rotation(moves):
+def rotation(moves, cube: "Cube"=None):
     """ Orientation of the cube is given by two numbers: top color and front color.
     6 top colors * 4 front colors / top color = 24 possible orientations
     Human FMC trick is used: no matter the orientation, turning a color is equivalent to
     the move that is associated with that color. """
-    orient = ORDER.copy()
+    orient = list(ORDER) if cube is None else cube.orient
     rot = dict(zip("xyz", (x, y, z)))
     new = []
     for move in tokenize(moves):
@@ -115,15 +115,53 @@ def rotation(moves):
             new.append(COLORS_MOVE[INT_STR[orient[ORDER.index(STR_INT[MOVE_COLORS[move]])]]] + number)
     return " ".join(new)
 
+def slice(moves: str) -> str:
+    """ Implements M, E, and S moves. """
+    s = {"M": "R L' x'",
+         "E": "U D' y'",
+         "S": "F' B z"
+        }
+    for move, v in list(s.items()):
+        s[move + "'"] = inverse(v)
+        s[move + "2"] = f"{v} {v}"
+    for move in sorted(s, reverse=True):
+        moves = moves.replace(move, s[move])
+    return moves
+
+def wide(moves: str) -> str:
+    """ Implements r, u, etc. """
+    w = {"r": "M'",
+         "l": "M",
+         "u": "E'",
+         "d": "E",
+         "f": "S",
+         "b": "S'"
+        }
+    for move in w:
+        w[move] = f"{move.upper()} {w[move]}"
+    for move, v in list(w.items()):
+        w[move + "'"] = inverse(v)
+        w[move + "2"] = f"{v} {v}" 
+    for move in sorted(w, reverse=True):
+        moves = moves.replace(move, w[move])
+    return moves
+
+def nonbasic(moves: str) -> str:
+    """ Implements 'nonbasic' moves: slices, wide moves, etc. """
+    return slice(wide(moves))
+
 ### MAIN CLASSES ###
 
 
 class Metric:
 
-    def __init__(self, moves): self.moves = set(moves)
+    def __init__(self, moves): 
+        self.moves = list(moves)
 
     def __str__(self): return " ".join(sorted(self.moves))
 
+    def __len__(self) -> int: 
+        return len(self.moves)
 
 class Cubie:
 
@@ -138,10 +176,19 @@ class Cubie:
 
 ### CUBING SPECIFIC THINGS ###
 
-MOVES = "UDFBRL"
-HTM = Metric(mat_list(((move, move + "'", move + "2") for move in MOVES)))
-QTM = Metric(mat_list((move, move + "'") for move in MOVES))
-TGEN = Metric(mat_list(((move, move + "'", move + "2") for move in "RU")))
+def make_metric(moves: str, include: list=[True]*3) -> Metric:
+    """ Makes a metric object, taking into account prime and double moves. """
+    add = ["", "'", "2"]
+    return Metric(mat_list(([move + add[i] for i in range(len(add)) \
+                             if include[i]] for move in moves)))
+
+ALL_MOVES = MOVES + "MES" + MOVES.lower()
+HTM = make_metric(MOVES) 
+QTM = make_metric(MOVES, [True, True, False])
+TGEN = make_metric("RU")
+HALF = make_metric(MOVES + "M", [False, False, True])
+ALL = make_metric(ALL_MOVES)
+SPEED = make_metric(MOVES.replace("B", "") + "MS" + "rfud")
 
 def str_cubies(cube):
     return [[Cubie([lambda i, j: cube[0][i][j], lambda i, j: None, lambda i, j: cube[5][2 - i][j]][layer](i, j),
@@ -173,8 +220,9 @@ class Cube:
             self.cube = get_solved_cube() if other is None else [[Cubie(*cubie.colors) for cubie in layer] for layer in other.cube]
         self.turns = dict(zip("UDFBRL", ORDER))
         self.layers = {0: self.get_ud_layer, 1: self.get_fb_layer, 2:self.get_lr_layer}
+        self.orient = list(ORDER) if other is None else list(other.orient)
 
-    def __str__(self): return colors.color(self.to_str())
+    def __str__(self): return colors.color(self.to_str()) + "\n"
 
     def to_str(self):
         cube = [flip(list_mat(get(INT_STR, face)), FLIPPED.get(i, None)) for i, face in enumerate(self.to_face())]
@@ -194,7 +242,6 @@ class Cube:
     def get_ud_layer(self, layer): return list(zip([layer]*9, range(9)))
 
     def get_layer(self, face):
-
         return self.layers[ORIENT[face]](0 if face in [W, B, O] else 2)
 
     def to_face(self, order=range(6)):
@@ -210,7 +257,7 @@ class Cube:
             access(self.cube, cubie).rotate(ORIENT[dir])
 
     def turn(self, moves):
-        for move in tokenize(rotation(moves)):
+        for move in tokenize(rotation(nonbasic(moves), self)):
             move, number = move[0], move[1:] if len(move) > 1 else 1
             number = 3 if number == "'" else int(number)
             for i in range(4 - number if self.turns[move] in FLIPPED else number):
@@ -324,6 +371,10 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
     q = [deque([(start, [])]), deque([(goal, [])])]
     states = 0
     poss = 1 if goal is None else 2
+    
+    last = 0
+    best = None
+    bestl = float("inf")
 
     def goal_test(node, repr, moves):
         if repr in cache:
@@ -337,6 +388,7 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
     while len(q[0]) > 0 or len(q[1]) > 0:
         for i in range(poss):
             n, moves = q[i].popleft()
+            last = max(last, len(moves))
 
             val = goal_test(n, fast_str(n.cube), moves)
             if val is not None: return val
@@ -349,7 +401,12 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
                     repr, movesp = fast_str(child.cube), moves + [move]
 
                     val = goal_test(child, repr, movesp)
-                    if val is not None: return val
+                    if val is not None:
+                        l = len(tokenize(val[1]))
+                        if l < bestl:
+                            bestl, best = l, val
+                    if bestl <= 2*last - 1:
+                        return best
 
                     if repr not in seen[i]:
                         seen[i][repr] = movesp

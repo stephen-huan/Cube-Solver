@@ -1,7 +1,10 @@
 import random
 import cube.cube as cube
-import numpy as np
-from linear.linear import *
+try:
+    import numpy as np
+    from linear.linear import *
+except:
+    pass
 
 def diag(m):
     values, vectors = np.linalg.eig(move_mat(m, moves))
