@@ -16,12 +16,25 @@ def mult(l1: list, l2: list) -> list:
     return [l1[n] for n in l2]
 
 if __name__ == "__main__":
-    # U move written as other moves
+    ### U move written as other moves
     # c = cube.Cube()
     # c.turn("U")
     # noU = cube.Metric(cube.mat_list(((move, move + "'", move + "2") for move in "DFBRL")))
     # print(cube.IDsolve(c, metric=noU)[:-1])
     # exit()
+
+    ### 3x3 with double move algs
+    c = cube.Cube()
+    ## four edge cycles
+    # c.turn("M2 U2 M2 U2 z M2 U2 M2 U2 z'")
+    # c.turn("M' U2 M2 U2 M' y M' U2 M2 U2 M' y'")
+    # c.turn("M2 U2 M2 U2 z M2 U2 M2 U2 z' x M2 U' M2 U2 M2 U' M2 x'")
+    # c.turn("M' U2 M2 U2 M' y M' U2 M2 U2 M' y' M2 U' M2 U2 M2 U' M2")
+    # c.turn("M' U2 M2 U2 M' y M' U2 M2 U2 M' y' x2 M2 U' M2 U2 M2 U' M2 x2")
+
+    print(c)
+    print(cube.solve(c, metric=cube.HALF)[:-1])
+    exit()
 
     print(mult(["a", "b", "c", "d", "e"], [2, 4, 0, 1, 3]))
 
@@ -93,3 +106,4 @@ if __name__ == "__main__":
         T = mat_exp(mat_exp(move_mat(order, moves), k) @ T, k)
 
     print(apply(T, M, cube.Cube()))
+

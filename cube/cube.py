@@ -98,12 +98,12 @@ def rotate(orient, dir):
     orient[i], orient[j] = orient[j], orient[i]
     return orient
 
-def rotation(moves, cube: "Cube"=None):
+def rotation(moves, orient: list=None):
     """ Orientation of the cube is given by two numbers: top color and front color.
     6 top colors * 4 front colors / top color = 24 possible orientations
     Human FMC trick is used: no matter the orientation, turning a color is equivalent to
     the move that is associated with that color. """
-    orient = list(ORDER) if cube is None else cube.orient
+    orient = list(ORDER) if orient is None else orient
     rot = dict(zip("xyz", (x, y, z)))
     new = []
     for move in tokenize(moves):
@@ -141,7 +141,7 @@ def wide(moves: str) -> str:
         w[move] = f"{move.upper()} {w[move]}"
     for move, v in list(w.items()):
         w[move + "'"] = inverse(v)
-        w[move + "2"] = f"{v} {v}" 
+        w[move + "2"] = f"{v} {v}"
     for move in sorted(w, reverse=True):
         moves = moves.replace(move, w[move])
     return moves
@@ -155,12 +155,12 @@ def nonbasic(moves: str) -> str:
 
 class Metric:
 
-    def __init__(self, moves): 
+    def __init__(self, moves):
         self.moves = list(moves)
 
     def __str__(self): return " ".join(sorted(self.moves))
 
-    def __len__(self) -> int: 
+    def __len__(self) -> int:
         return len(self.moves)
 
 class Cubie:
@@ -183,10 +183,14 @@ def make_metric(moves: str, include: list=[True]*3) -> Metric:
                              if include[i]] for move in moves)))
 
 ALL_MOVES = MOVES + "MES" + MOVES.lower()
-HTM = make_metric(MOVES) 
+HTM = make_metric(MOVES)
 QTM = make_metric(MOVES, [True, True, False])
 TGEN = make_metric("RU")
-HALF = make_metric(MOVES + "M", [False, False, True])
+# HALF = make_metric(MOVES, [False, False, True])
+# HALF = make_metric("RLUDFMESruf", [False, False, True])
+# HALF = make_metric("RLUDFMruf", [False, False, True])
+HALF = make_metric("RLUFMr", [False, False, True])
+# HALF.moves += ["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"]
 ALL = make_metric(ALL_MOVES)
 SPEED = make_metric(MOVES.replace("B", "") + "MS" + "rfud")
 
@@ -196,16 +200,20 @@ def str_cubies(cube):
                     None if j == 1 else cube[j + 1][layer][i if j == 0 else 2 - i])
              for i in range(3) for j in range(3)] for layer in range(3)]
 
-def get_solved_cube(): return [[Cubie([W, None, Y][layer], [B, None, G][i], [O, None, R][j]) for i in range(3) for j in range(3)] for layer in range(3)]
+def get_solved_cube():
+    return [[Cubie([W, None, Y][layer], [B, None, G][i], [O, None, R][j]) \
+             for i in range(3) for j in range(3)] for layer in range(3)]
 
-def fast_str(m): return  "".join(map(str, mat_list(m)))
+def fast_str(c):
+    return "".join(map(str, mat_list(c.cube))) # + "".join(map(str, c.orient))
 
 def faster_rep(m):
     string = fast_str(m)
     bin_string = ''.join([bin(ORDER[COLORS.index(i)] if i in COLORS else 6)[2:] for i in string])
     return int(bin_string, 2)
 
-def solved(cube, *args): return fast_str(cube.cube) == fast_str(get_solved_cube())
+def solved(cube, *args):
+    return fast_str(cube) == fast_str(Cube())
 
 def cubie_correct(cube, cubie):
     intersect = [face for face in ORDER if cubie in cube.get_layer(face)]
@@ -257,7 +265,7 @@ class Cube:
             access(self.cube, cubie).rotate(ORIENT[dir])
 
     def turn(self, moves):
-        for move in tokenize(rotation(nonbasic(moves), self)):
+        for move in tokenize(rotation(nonbasic(moves), self.orient)):
             move, number = move[0], move[1:] if len(move) > 1 else 1
             number = 3 if number == "'" else int(number)
             for i in range(4 - number if self.turns[move] in FLIPPED else number):
@@ -371,7 +379,7 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
     q = [deque([(start, [])]), deque([(goal, [])])]
     states = 0
     poss = 1 if goal is None else 2
-    
+
     last = 0
     best = None
     bestl = float("inf")
@@ -390,7 +398,7 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
             n, moves = q[i].popleft()
             last = max(last, len(moves))
 
-            val = goal_test(n, fast_str(n.cube), moves)
+            val = goal_test(n, fast_str(n), moves)
             if val is not None: return val
 
             for move in metric.moves:
@@ -398,7 +406,7 @@ def solve(start, target=(Cube(), solved), metric=HTM, cache={}):
                     states += 1
                     child = Cube(n)
                     child.turn(move)
-                    repr, movesp = fast_str(child.cube), moves + [move]
+                    repr, movesp = fast_str(child), moves + [move]
 
                     val = goal_test(child, repr, movesp)
                     if val is not None:
@@ -433,7 +441,7 @@ def IDdfs(start, target, metric, depth, filename):
         for i in range(poss):
             n, path, moves = stk[i].pop()
 
-            val = goal_test(n, fast_str(n.cube), moves)
+            val = goal_test(n, fast_str(n), moves)
             if val is not None: return val
 
             children = False
@@ -442,7 +450,7 @@ def IDdfs(start, target, metric, depth, filename):
                     states += 1
                     child = Cube(n)
                     child.turn(move)
-                    repr, movesp = fast_str(child.cube), moves + [move]
+                    repr, movesp = fast_str(child), moves + [move]
 
                     val = goal_test(child, repr, movesp)
                     if val is not None: return val
